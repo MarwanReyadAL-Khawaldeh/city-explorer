@@ -46,7 +46,7 @@ function Location(locData) {
 
 server.get('/weather', (req, res) => {
     let data1 = [];
-    let weatherData = require('./data/weather.json');
+    let weatherData = require('./Data/weather.json');
     // console.log(weatherData);
     weatherData.data.map(val => {
         console.log(val);
