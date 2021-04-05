@@ -38,15 +38,12 @@ function locationHandler(req, res) {
     console.log('befor superagent');
     superagent.get(locURL)
         .then(geoData => {
-            console.log('inside superagent');
             console.log(geoData.body);
-            let lData = geoData.body;
-            let locationData = new Location(lData, cityName);
+            let gData = geoData.body;
+            const locationData = new Location(cityName, gData);
             res.send(locationData);
         })
         .catch(error => {
-            console.log('inside superagent');
-            console.log('Error in getting data from LocationIQ server');
             console.error(error);
             res.send(error);
         });
@@ -64,7 +61,7 @@ function weatherHandler(req, res) {
         .then(day => {
             // console.log(day.body.data.Weather);
             day.body.data.map(val => {
-                data1.push(new Weather(val));
+                return data1.push(new Weather(val));
             });
             res.send(data1);
         });
@@ -79,9 +76,11 @@ function parkHandler(req, res) {
     superagent.get(parURL)
         .then(parkData => {
             parkData.body.data.forEach(val => {
+                console.log(parkData.body.data);
                 data2.push(new Park(val));
             });
             res.send(data2);
+            console.log(data2);
         });
 }
 
@@ -105,8 +104,8 @@ function Weather(weatherDay) {
 }
 function Park(parkData) {
     this.name = parkData.name;
-    this.address = parkData.address;
-    this.free = parkData.free;
+    this.addresses = parkData.addresses[0].city;
+    this.entranceFees = parkData.entranceFees[0].cost;
     this.description = parkData.description;
     this.url = parkData.url;
 }
