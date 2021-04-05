@@ -58,7 +58,7 @@ function locationHandler(req, res) {
 function weatherHandler(req, res) {
     console.log(req.query);
     let data1 = [];
-    let cityName = req.query.city;
+    let cityName = req.query.search_query;
     console.log(cityName);
     let key = process.env.WEATHER_KEY;
     let weaURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${cityName}&key=${key}`;
@@ -74,7 +74,7 @@ function weatherHandler(req, res) {
 function parkHandler(req, res) {
     let data2 = [];
     console.log(req.query);
-    let parkeName = req.query.city;
+    let parkeName = req.query.search_query;
     console.log(parkeName);
     let key = process.env.PARK_KEY;
     let parURL = `https://developer.nps.gov/api/v1/parks?q=${parkeName}&api_key=${key}`;
