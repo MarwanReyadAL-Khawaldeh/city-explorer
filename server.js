@@ -102,12 +102,12 @@ function Weather(weatherDay) {
 
     console.log(weatherDay);
     this.description = weatherDay.weather.description;
-    this.valid_date = weatherDay.valid_date;
+    this.valid_date = weatherDay.valid_date.toString().slice(0, 15);
 
 }
 function Park(parkData) {
-    this.name = parkData.name;
-    this.addresses = parkData.addresses[0].city;
+    this.name = parkData.fullName;
+    this.addresses = `${parkData.addresses[0].line1},  ${parkData.addresses[0].city}, ${parkData.addresses[0].stateCode} ${parkData.addresses[0].postalCode}`;
     this.entranceFees = parkData.entranceFees[0].cost;
     this.description = parkData.description;
     this.url = parkData.url;
@@ -116,11 +116,8 @@ function Park(parkData) {
 
 //location:3030/ddddddd
 function erroeHandler(req, res) {
-    let errObj = {
-        status: 500,
-        responseText: "Sorry, something went wrong"
-    };
-    res.status(500).send(errObj);
+
+    res.status(500).send('Not Found');
 }
 
 server.listen(PORT, () => {
