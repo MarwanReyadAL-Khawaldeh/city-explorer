@@ -59,7 +59,7 @@ function locationHandler(req, res) {
 function weatherHandler(req, res) {
     console.log(req.query);
     let data1 = [];
-    let cityName = req.query.search_query;
+    let cityName = req.query.city;
     console.log(cityName);
     let key = process.env.WEATHER_KEY;
     let weaURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${cityName}&key=${key}`;
@@ -75,7 +75,7 @@ function weatherHandler(req, res) {
 function parkHandler(req, res) {
     let data2 = [];
     console.log(req.query);
-    let parkeName = req.query.search_query;
+    let parkeName = req.query.city;
     console.log(parkeName);
     let key = process.env.PARK_KEY;
     let parURL = `https://developer.nps.gov/api/v1/parks?q=${parkeName}&api_key=${key}`;
@@ -109,7 +109,7 @@ function Weather(weatherDay) {
 }
 function Park(parkData) {
     this.name = parkData.fullName;
-    this.address = `${parkData.addresses[0].line1},  ${parkData.addresses[0].city}, ${parkData.addresses[0].stateCode} ${parkData.addresses[0].postalCode}`;
+    this.address = `${parkData.addresses[0].line1},${parkData.addresses[0].city},${parkData.addresses[0].stateCode},${parkData.addresses[0].postalCode}`;
     this.fee = parkData.entranceFees[0].cost;
     this.description = parkData.description;
     this.url = parkData.url;
