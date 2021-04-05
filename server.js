@@ -38,12 +38,15 @@ function locationHandler(req, res) {
     console.log('befor superagent');
     superagent.get(locURL)
         .then(geoData => {
+            console.log('inside superagent');
             console.log(geoData.body);
-            let gData = geoData.body;
-            const locationData = new Location(cityName, gData);
+            let lData = geoData.body;
+            let locationData = new Location(lData, cityName);
             res.send(locationData);
         })
         .catch(error => {
+            console.log('inside superagent');
+            console.log('Error in getting data from LocationIQ server');
             console.error(error);
             res.send(error);
         });
