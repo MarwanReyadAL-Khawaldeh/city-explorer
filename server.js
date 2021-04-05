@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 server.use(cors());
 
 
-// server.get('/', homeRouteHandler);
+server.get('/', homeRouteHandler);
 server.get('/location', locationHandler);
 server.get('/weather', weatherHandler);
 server.get('/parks', parkHandler);
@@ -23,10 +23,9 @@ server.get('*', erroeHandler);
 
 
 
-// request url (browser): localhost:3030/
-// function homeRouteHandler(request, response) {
-//     response.status(200).send('you server is alive!!');
-// }
+function homeRouteHandler(request, response) {
+    response.status(200).send('you server is alive!!');
+}
 
 // request url (browser): localhost:3030/location
 function locationHandler(req, res) {
