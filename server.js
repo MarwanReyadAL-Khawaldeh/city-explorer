@@ -1,9 +1,12 @@
 'use strict';
 
-const express = require('express'); // npm i express
-require('dotenv').config(); // npm i dotenv
-// CORS: Cross Origin Resource Sharing -> for giving the permission for who(clients) can touch my server oe send requests to my server
-const cors = require('cors'); // npm i cors
+const express = require('express');
+
+require('dotenv').config();
+
+const cors = require('cors');
+
+const pg = require('pg');
 
 const server = express();
 
@@ -11,6 +14,15 @@ const superagent = require('superagent');
 
 
 const PORT = process.env.PORT || 5000;
+
+const client = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+    // ssl:
+    // {
+    //     rejectUnauthorized: false
+    // }
+});
+
 
 server.use(cors());
 
@@ -27,22 +39,47 @@ function homeRouteHandler(request, response) {
     response.status(200).send('you server is alive!!');
 }
 
-// https://%20localhost:3000/location?city=seattle
+
+
+// https://localhost:3000/location?city=seattle
 function locationHandler(req, res) {
     console.log(req.query);
     let cityName = req.query.city;
     console.log(cityName);
+
     let key = process.env.LOCATION_KEY;
     let LocURL = `https://us1.locationiq.com/v1/search.php?key=${key}&q=${cityName}&format=json`;
-    superagent.get(LocURL)
-        .then(geoData => {
-            let gData = geoData.body;
-            const locationData = new Location(cityName, gData);
-            res.send(locationData);
+    let SQL = `SELECT * FROM locations WHERE search_query = '${cityName}';`;
+    client.query(SQL)
+        .then(result => {
+            if (result.rows.length === 0) {
+                superagent.get(LocURL)
+                    .then(geoData => {
+                        let gData = geoData.body;
+                        const locationData = new Location(cityName, gData);
+                        let addLocationData = `INSERT INTO locations (search_query,formatted_query ,latitude,longitude) VALUES ($1,$2,$3,$4) RETURNING *;`;
+                        let safeValues = [cityName, locationData.formatted_query, locationData.latitude, locationData.longitude];
+                        client.query(addLocationData, safeValues)
+                            .then(() => {
+                                res.send(locationData);
+                            });
+
+                    }).catch(() => {
+
+                        res.status(404).send('Page Not Found.');
+                    });
+            }
+
+
+            else {
+                res.send(result.rows[0]);
+            }
         })
         .catch(error => {
             res.send(error);
         });
+
+
 }
 
 
@@ -51,6 +88,7 @@ function weatherHandler(req, res) {
     let cityName = req.query.search_query;
     let key = process.env.WEATHER_KEY;
     let weaURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${cityName}&key=${key}`;
+
     superagent.get(weaURL)
         .then(day => {
             let weadata = day.body.data.map(val => {
@@ -58,11 +96,11 @@ function weatherHandler(req, res) {
             });
             res.send(weadata);
         });
+
 }
 
 
 function parkHandler(req, res) {
-    let data2 = [];
     console.log(req.query);
     let parkeName = req.query.search_query;
     console.log(parkeName);
@@ -75,7 +113,6 @@ function parkHandler(req, res) {
                 return new Park(val);
             });
             res.send(parData);
-            console.log(data2);
         });
 }
 
@@ -111,9 +148,14 @@ function erroeHandler(req, res) {
     res.status(500).send('Not Found');
 }
 
-server.listen(PORT, () => {
-    console.log(`Listening on PORT ${PORT}`);
-});
 
+
+client.connect()
+    .then(() => {
+        server.listen(PORT, () => {
+            console.log(`Listening on PORT ${PORT}`);
+        });
+
+    });
 
 
