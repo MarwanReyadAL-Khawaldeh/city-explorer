@@ -27,50 +27,40 @@ function homeRouteHandler(request, response) {
     response.status(200).send('you server is alive!!');
 }
 
-// request url (browser): localhost:3030/location
+// https://%20localhost:3000/location?city=seattle
 function locationHandler(req, res) {
     console.log(req.query);
     let cityName = req.query.city;
     console.log(cityName);
     let key = process.env.LOCATION_KEY;
     let LocURL = `https://us1.locationiq.com/v1/search.php?key=${key}&q=${cityName}&format=json`;
-    console.log('before superagent');
     superagent.get(LocURL)
         .then(geoData => {
-            console.log('inside superagent');
-            console.log(geoData.body);
             let gData = geoData.body;
             const locationData = new Location(cityName, gData);
             res.send(locationData);
         })
-
         .catch(error => {
-            console.log('inside superagent');
-            console.log('Error in getting data from LocationIQ server');
-            console.error(error);
             res.send(error);
         });
-    console.log('after superagent');
-
 }
 
 
 function weatherHandler(req, res) {
     console.log(req.query);
-    let data1 = [];
     let cityName = req.query.search_query;
-    console.log(cityName);
     let key = process.env.WEATHER_KEY;
     let weaURL = `https://api.weatherbit.io/v2.0/forecast/daily?city=${cityName}&key=${key}`;
     superagent.get(weaURL)
         .then(day => {
-            // console.log(day.body.data.Weather);
-            day.body.data.map(val => {
-                return data1.push(new Weather(val));
+            let weadata = day.body.data.map(val => {
+                return new Weather(val);
             });
-            res.send(data1);
+            res.send(weadata);
         });
 }
+
+
 function parkHandler(req, res) {
     let data2 = [];
     console.log(req.query);
@@ -80,11 +70,11 @@ function parkHandler(req, res) {
     let parURL = `https://developer.nps.gov/api/v1/parks?q=${parkeName}&api_key=${key}`;
     superagent.get(parURL)
         .then(parkData => {
-            parkData.body.data.forEach(val => {
+            let parData = parkData.body.data.map(val => {
                 console.log(parkData.body.data);
-                data2.push(new Park(val));
+                return new Park(val);
             });
-            res.send(data2);
+            res.send(parData);
             console.log(data2);
         });
 }
