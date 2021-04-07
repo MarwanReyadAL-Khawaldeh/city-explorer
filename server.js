@@ -17,10 +17,10 @@ const PORT = process.env.PORT || 5000;
 
 const client = new pg.Client({
     connectionString: process.env.DATABASE_URL,
-    ssl:
-    {
-        rejectUnauthorized: false
-    }
+    // ssl:
+    // {
+    //     rejectUnauthorized: false
+    // }
 });
 
 
@@ -31,6 +31,8 @@ server.get('/', homeRouteHandler);
 server.get('/location', locationHandler);
 server.get('/weather', weatherHandler);
 server.get('/parks', parkHandler);
+server.get('/movies', movieHandler);
+server.get('/yelp', yelpHandler);
 server.get('*', erroeHandler);
 
 
@@ -41,7 +43,6 @@ function homeRouteHandler(request, response) {
 
 
 
-// https://localhost:3000/location?city=seattle
 function locationHandler(req, res) {
     console.log(req.query);
     let cityName = req.query.city;
@@ -95,6 +96,8 @@ function weatherHandler(req, res) {
                 return new Weather(val);
             });
             res.send(weadata);
+        }).catch(error => {
+            res.send(error);
         });
 
 }
@@ -113,8 +116,59 @@ function parkHandler(req, res) {
                 return new Park(val);
             });
             res.send(parData);
+        }).catch(error => {
+            res.send(error);
         });
 }
+
+function movieHandler(req, res) {
+    console.log(req.query);
+    let movieName = req.query.search_query;
+    console.log(movieName);
+    let key = process.env.MOVIE_KEY;
+    let movieURL = `https://api.themoviedb.org/3/search/movie?api_key=${key}&query=${movieName}`;
+    superagent.get(movieURL)
+        .then(movieData => {
+            let movData = movieData.body.results.map(val => {
+                console.log(movieData.body.results);
+                return new Movie(val);
+
+            });
+            res.send(movData);
+        })
+        .catch(error => {
+            res.send(error);
+        });
+}
+
+function yelpHandler(req, res) {
+
+
+    let cityName = req.query.search_query;
+
+    let pageNum = req.query.page;
+
+    let key = process.env.YELP_KEY;
+
+    let numPerPage = 5;
+
+    let index = ((pageNum - 1) * numPerPage + 1);
+
+    let yelpURL = `https://api.yelp.com/v3/businesses/search?location=${cityName}&limit=${numPerPage}&offset=${index}`;
+    superagent.get(yelpURL).set('authorization',`Bearer ${key}`)
+        .then(yelpData => {
+
+            let yelpbody = yelpData.body.businesses.map(val => {
+                return new Yelp(val);
+            });
+
+            res.send(yelpbody);
+
+        }).catch(error => {
+            res.send(error);
+        });
+}
+
 
 function Location(cityName, geoData) {
     this.search_query = cityName;
@@ -129,16 +183,36 @@ function Location(cityName, geoData) {
 function Weather(weatherDay) {
 
     console.log(weatherDay);
-    this.description = weatherDay.weather.description;
-    this.valid_date = new Date(weatherDay.datetime).toString().slice(0, 15);
+    this.forecast = weatherDay.weather.description;
+    this.time = new Date(weatherDay.datetime).toString().slice(0, 15);
 
 }
 function Park(parkData) {
     this.name = parkData.fullName;
-    this.address = `${parkData.addresses[0].line1},${parkData.addresses[0].city},${parkData.addresses[0].stateCode},${parkData.addresses[0].postalCode}`;
+    this.address = `${parkData.addresses[0].line1}, ${parkData.addresses[0].city}, ${parkData.addresses[0].stateCode}, ${parkData.addresses[0].postalCode} `;
     this.fee = parkData.entranceFees[0].cost;
     this.description = parkData.description;
     this.url = parkData.url;
+}
+
+function Movie(movData) {
+
+    this.title = movData.original_title;
+    this.overview = movData.overview;
+    this.average_votes = movData.vote_average;
+    this.total_votes = movData.vote_count;
+    this.image_url = `https://image.tmdb.org/t/p/w500/${movData.poster_path}`;
+    this.popularity = movData.popularity;
+    this.released_on = movData.release_date;
+}
+
+
+function Yelp(yelpData) {
+    this.name = yelpData.name;
+    this.image_url = yelpData.image_url;
+    this.price = yelpData.price;
+    this.rating = yelpData.rating;
+    this.url = yelpData.url;
 }
 
 
@@ -153,7 +227,7 @@ function erroeHandler(req, res) {
 client.connect()
     .then(() => {
         server.listen(PORT, () => {
-            console.log(`Listening on PORT ${PORT}`);
+            console.log(`Listening on PORT ${PORT} `);
         });
 
     });
